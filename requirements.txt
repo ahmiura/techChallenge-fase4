@@ -1,0 +1,12 @@
+torch>=2.0.0
+yfinance
+pandas
+numpy<2.0.0
+scikit-learn
+fastapi
+uvicorn
+pydantic
+joblib
+matplotlib
+mlflow
+prometheus-fastapi-instrumentator
