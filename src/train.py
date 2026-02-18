@@ -6,6 +6,9 @@ import numpy as np
 import json
 import random
 import mlflow
+import matplotlib
+# Configura backend não-interativo para evitar erros no Docker
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from sklearn.metrics import mean_squared_error, mean_absolute_error, mean_absolute_percentage_error
 from src.data import download_data, preprocess_data

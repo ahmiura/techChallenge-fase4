@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException, Request
+from contextlib import asynccontextmanager
 from src.predict import Predictor
 from src.config import TICKER, MODEL_PATH
 from api.schemas import PredictionRequest, PredictionResponse
@@ -8,7 +9,22 @@ import yfinance as yf
 from prometheus_fastapi_instrumentator import Instrumentator
 from prometheus_client import Gauge
 
-app = FastAPI(title="Stock Price Predictor API", version="1.0")
+predictor = None
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    global predictor
+    try:
+        if os.path.exists(MODEL_PATH):
+            predictor = Predictor()
+            print("Modelo carregado com sucesso!")
+        else:
+            print("Aviso: Modelo não encontrado. Execute src/train.py primeiro.")
+    except Exception as e:
+        print(f"Erro ao carregar modelo: {e}")
+    yield
+
+app = FastAPI(title="Stock Price Predictor API", version="1.0", lifespan=lifespan)
 
 # Métrica customizada para requisições em andamento
 in_progress_gauge = Gauge("http_requests_in_progress", "Requests in progress", ["handler", "method"])
@@ -26,20 +42,6 @@ async def track_in_progress(request: Request, call_next):
 # Configuração de Monitoramento (Prometheus)
 Instrumentator().instrument(app).expose(app)
 
-predictor = None
-
-@app.on_event("startup")
-def load_model():
-    global predictor
-    try:
-        # Verifica se o modelo existe antes de carregar
-        if os.path.exists(MODEL_PATH):
-            predictor = Predictor()
-            print("Modelo carregado com sucesso!")
-        else:
-            print("Aviso: Modelo não encontrado. Execute src/train.py primeiro.")
-    except Exception as e:
-        print(f"Erro ao carregar modelo: {e}")
 
 @app.post("/predict", response_model=PredictionResponse)
 def predict(request: PredictionRequest):
