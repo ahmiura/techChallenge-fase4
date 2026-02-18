@@ -87,9 +87,15 @@ def run_experiment(params, X_train, y_train, X_test, y_test, scaler, run_name):
         plt.xlabel("Dias")
         plt.ylabel("Preço (R$)")
         plt.legend()
+        plt.grid(True, which='both', linestyle='--', linewidth=0.5)
         plt.savefig("prediction_plot.png")
-        mlflow.log_artifact("prediction_plot.png")
         plt.close()
+
+        mlflow.log_artifact("prediction_plot.png")
+        
+        # Limpeza: Remove o arquivo local após enviar para o MLflow para não sujar o disco
+        if os.path.exists("prediction_plot.png"):
+            os.remove("prediction_plot.png")
         
         print(f"[{run_name}] RMSE: {rmse:.4f} | MAE: {mae:.4f} | Params: {params}")
         
@@ -99,8 +105,9 @@ def train():
     os.makedirs(MODELS_DIR, exist_ok=True)
     set_seed(42) # Seed global inicial
     
-    # Configura URI para garantir File Store (compatível com Docker volume)
-    mlflow.set_tracking_uri("file://" + os.path.join(BASE_DIR, "mlruns"))
+    # Configura URI: Usa variável de ambiente (Docker) ou fallback para arquivo local
+    tracking_uri = os.getenv("MLFLOW_TRACKING_URI", "file://" + os.path.join(BASE_DIR, "mlruns"))
+    mlflow.set_tracking_uri(tracking_uri)
     mlflow.set_experiment("TechChallenge-Fase4-LSTM")
 
     print("1. Baixando e processando dados...")

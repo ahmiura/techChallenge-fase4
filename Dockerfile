@@ -4,6 +4,11 @@ WORKDIR /app
 
 # Instala dependências
 COPY requirements.txt .
+
+# 1. Instala PyTorch versão CPU (muito mais leve, evita erro de espaço em disco)
+RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu
+
+# 2. Instala o restante das dependências
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copia o código fonte
